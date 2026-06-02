@@ -213,3 +213,260 @@ Both exit with code 0 on success, code 1 on any failure. Run from project root:
 python tests/validate_01_load_data.py
 python tests/validate_02_eda.py
 ```
+
+---
+
+## 11. Index Construction — Data Inspection and Normalisation Decisions (2026-06-01)
+
+Before building the index in `03_index_construction.ipynb`, a structured data inspection was conducted on `pillar_feature_table.csv` (87 EU27 NUTS-1 regions × 6 pillars). The following findings and decisions were made.
+
+### 11.1 Missing Values
+
+Only P5 (Unemployment) has missing values: 7 regions (8%) — DE8, FRM, PL2, PL7, PL8, PL9, PT3. These were already documented and accepted in Section 8. All other pillars are complete.
+
+### 11.2 Distribution findings
+
+| Pillar | Min | Q25 | Median | Q75 | Max | Std | Finding |
+|--------|-----|-----|--------|-----|-----|-----|---------|
+| P1 Digital Skills | 27.1 | 51.5 | 62.0 | 67.3 | 85.2 | 12.3 | Healthy spread |
+| P2 Poverty | 10.8 | 16.9 | 19.9 | 24.2 | 41.4 | 6.5 | Healthy spread |
+| P3 Education | 3.4 | 10.4 | 15.0 | 20.9 | 56.7 | 10.9 | **Outlier: PT2 = 56.7 % vs. median 15 %** |
+| P4 Lifelong Learning | 3.3 | 9.0 | 12.8 | 16.8 | 40.3 | 7.3 | Healthy spread |
+| P5 Unemployment | 4.1 | 9.4 | 12.6 | 16.1 | 38.3 | 6.2 | Healthy spread |
+| P6 Demographics | 13.0 | 20.0 | 21.7 | 23.9 | 28.4 | 3.0 | **Very low variance — IQR only 3.9 pp** |
+
+**P6 note:** 75 % of regions fall within a 4 percentage-point band (20–24 %). P6 provides limited separation between regions in both the index and clustering. It is retained — the demographic signal is real — but its discriminating power is low.
+
+### 11.3 Correlation matrix (Pearson)
+
+| | P1 | P2 | P3 | P4 | P5 | P6 |
+|--|--|--|--|--|--|--|
+| P1 | 1.00 | -0.39 | -0.05 | **0.61** | -0.11 | -0.15 |
+| P2 | | 1.00 | 0.47 | -0.29 | 0.34 | -0.06 |
+| P3 | | | 1.00 | -0.04 | -0.14 | -0.05 |
+| P4 | | | | 1.00 | 0.27 | -0.22 |
+| P5 | | | | | 1.00 | -0.19 |
+| P6 | | | | | | 1.00 |
+
+**P1 ↔ P4: r = 0.61 (moderate positive).** Regions with strong digital skills tend to also have higher participation in continuing education. Both pillars are retained: they measure conceptually distinct things (current competence vs. active learning behaviour), and r = 0.61 is not strong enough to justify removal. No multicollinearity concern for the composite index.
+
+All other pillar pairs: |r| < 0.5. The pillars are largely measuring independent dimensions.
+
+### 11.4 PT2 outlier — analysis and decision
+
+**Situation:** PT2 (Região Autónoma da Madeira e Açores) has `low_education_pct` = 56.7 %, against a dataset median of 15.0 % and a next-highest value of 43.3 % (ITG). This is the maximum in the entire dataset on P3 and pulls the min-max scale significantly.
+
+**Is this a data error?** No. PT2's figure reflects the structural reality of historically isolated Atlantic island regions with limited access to post-compulsory education and an economy dominated by tourism and agriculture — sectors that historically required no formal qualifications. P5 confirms this: PT2 has an unemployment rate of only 5.5 % (rank 75/80, nearly the best), meaning the low-education population is nevertheless employed. The data is correct and the outlier is meaningful.
+
+**Concrete impact on the index:** A simulation was run comparing index scores with and without PT2 as the P3 anchor:
+- Maximum score shift for any region: **3.0 index points**
+- Average score shift: **0.77 index points**
+- Total index span: 50.4 points
+- No region changes risk class; top rankings are unaffected (ITG stays rank 1 with or without PT2)
+
+**Decision: PT2 is retained in the dataset without modification.**
+
+**Alternatives considered and rejected:**
+- *Remove PT2 entirely:* Methodologically dishonest — PT2 is a real EU region with a genuine and severe AI literacy gap risk. Removing it because it is statistically inconvenient would undermine the purpose of the index.
+- *Winsorizing (cap P3 at 95th percentile):* Would reduce PT2's P3 value to ~37 %. Given that the concrete impact on scores is only 0–3 index points, this added complexity is not justified. Retained as an option for the sensitivity analysis in Step 5.
+
+### 11.5 Normalisation method — decision for index and clustering
+
+**Context:** Three normalisation methods were evaluated: Min-Max, Z-Score, and Robust Scaling (median/IQR).
+
+**Key finding on Robust Scaling:** Contrary to intuition, Robust Scaling makes the PT2 outlier *more* extreme, not less. The IQR for P3 is only 10.5 pp (the middle 50 % of regions are tightly clustered). PT2 at 56.7 % is therefore 3.97 IQR-units from the median — compared to 3.60 standard deviations under Z-Score, and simply 1.000 (the maximum) under Min-Max. Min-Max is actually the *least* extreme representation of PT2.
+
+Additionally, Robust Scaling without a secondary rescaling produces unequal feature spreads across pillars (std: 0.76–1.03), which is problematic for K-Means clustering which relies on comparable Euclidean distances. Applying a secondary min-max after robust scaling produces results mathematically identical to pure min-max (two consecutive linear transformations preserve relative distances).
+
+**Decision: Min-Max normalisation [0, 1] for both the composite index and the clustering step.**
+
+| Method | Index | Clustering | Verdict |
+|--------|-------|------------|---------|
+| Min-Max | ✓ Standard, interpretable, [0,1] | ✓ Consistent with index, PT2 effect negligible | **Selected** |
+| Z-Score | Unbounded, harder to interpret | Viable but inconsistent with index | Rejected |
+| Robust Scaling | Identical to Min-Max after rescaling | Makes PT2 *more* extreme; unequal feature spreads | Rejected |
+
+---
+
+## 12. Index Construction — Three Weighting Variants (2026-06-01)
+
+### 12.1 Overview
+
+The composite index is built in three weighting variants to validate robustness and support a transparent final selection. All three variants use the same normalised pillar scores (Min-Max, direction-aligned) from Steps 2–3 of `03_index_construction.ipynb`. They differ only in how pillar weights are assigned.
+
+| Variant | Step | Weights | Logic |
+|---------|------|---------|-------|
+| Baseline | Step 4 | Equal (1/6 per pillar) | No prior assumptions — OECD standard |
+| PCA | Step 6 | Data-driven (PC1 loadings) | Algorithm derives weights from variance structure |
+| Expert | Step 5 | Domain-knowledge driven | Human judgment about relative pillar importance |
+
+Note: The logical ordering is Baseline → PCA → Expert (objective → data-driven → normative). Step numbering in the notebook follows the order in which they were implemented (Baseline → Expert → PCA), which differs from the conceptual ordering above.
+
+---
+
+### 12.2 Variant 1 — Baseline: Equal weights
+
+All 6 pillars receive equal weight (1/6 ≈ 16.7 %). Index score = simple mean of the 6 normalised pillar scores.
+
+**Role:** Reference point. Not the final index — used to measure how much the other two variants deviate from a neutral starting point. Consistent with DESI, HDI, and standard OECD composite index methodology.
+
+---
+
+### 12.3 Variant 2 — Expert weights
+
+**Weights:** P1 = 35%, P3 = 22%, P2/P4/P5 = 13% each, P6 = 4%
+
+**Rationale per pillar:**
+- **P1 (35%):** The only pillar that directly measures digital competence — the conceptual core of the index. All other pillars are structural proxies. Upweighted to reflect its primacy as the anchor dataset.
+- **P3 (22%):** The strongest structural predictor of AI literacy vulnerability. Low educational attainment is the root cause that makes gaps persistent across generations.
+- **P2 / P4 / P5 (13% each):** Important contextual dimensions with no clear priority ordering between them.
+- **P6 (4%):** Retained to keep the demographic dimension in scope, but downweighted to reflect its low discriminating power (IQR = 3.9 pp, std = 3.0). Near-exclusion is intentional and documented.
+
+**Known limitation:** The exact percentage values (35%, 22% etc.) are informed estimates. The precise numbers are inherently subjective — what is defensible is the direction and relative magnitude of the weighting. The robustness comparison in Step 7 tests whether these specific values produce materially different results from the other variants.
+
+---
+
+### 12.4 Variant 3 — PCA weights
+
+**Method:** Principal Component Analysis (PCA) fitted on the 6 normalised pillar scores for the 80 complete-case regions (StandardScaler applied before PCA). Weights = absolute PC1 loadings, normalised to sum to 1.
+
+**What PCA does:** Finds the linear combination of pillars that explains the most variance across regions (PC1 = the "main risk axis"). Pillars that co-vary most strongly with this axis receive higher weights.
+
+**Results:**
+
+| Pillar | PCA weight | PC1 loading | Expert weight |
+|--------|-----------|-------------|---------------|
+| P1 Digital Skills | 27.3% | +0.570 | 35% |
+| P2 Poverty | 25.9% | +0.540 | 13% |
+| P4 Lifelong Learning | 25.0% | +0.521 | 13% |
+| P3 Education | 15.3% | +0.319 | 22% |
+| P6 Demographics | 4.6% | +0.097 | 4% |
+| P5 Unemployment | 1.8% | +0.036 | 13% |
+
+**Key finding — PC1 explains only 34.5% of total variance.** This is a meaningful result: it confirms that the 6 pillars measure genuinely different dimensions of risk. There is no single dominant "risk axis". If PC1 explained 80%+, it would indicate pillar redundancy. 34.5% means each pillar contributes unique information — which validates the composite index design. The limitation is that PCA weights derived from PC1 alone ignore 65.5% of the variance when determining relative pillar importance.
+
+**Notable divergences from Expert weights:**
+- **P5 (Unemployment): 1.8% vs. 13%** — the near-zero loading means unemployment does not co-vary with the main risk signal. Structurally plausible: low-educated workers are employed in Southern Europe (tourism) and unemployed in Eastern Europe — the signal is region-type-specific, not a general risk factor.
+- **P2 (Poverty): 25.9% vs. 13%** — the data shows poverty and digital skills vary strongly together across regions. The PCA treats poverty as an equally primary indicator as digital skills.
+- **P4 (Lifelong Learning): 25.0% vs. 13%** — elevated due to its correlation with P1 (r = 0.61).
+
+**All PC1 loadings are positive** — confirming that after direction alignment (Step 3), PC1 points in the high-risk direction for all pillars. No sign-flip correction needed.
+
+---
+
+### 12.5 Expert weights — removed from scope
+
+The expert weighting variant (P1=35%, P3=22%, P2/P4/P5=13%, P6=4%) was removed after further reflection. The specific percentage values, while documented and reasoned, are ultimately informed estimates without a hard empirical basis. The exact numbers (why 35% and not 30%?) cannot be defended with the same rigour as a data-driven approach. Expert weights were removed from the notebook to keep the analysis clean and defensible. The rationale is documented here for transparency.
+
+---
+
+### 12.6 PC1-only vs. All-PC — decision and rationale
+
+Two PCA weighting variants were computed and compared:
+
+**PC1-only weights** use the absolute loadings of the first principal component, normalised to sum to 1. Result: P1=27.3%, P2=25.9%, P4=25.0%, P3=15.3%, P6=4.6%, P5=1.8%. P5 is near-excluded (1.8%) not because it is unimportant, but because its variance pattern is orthogonal to PC1 — it dominates PC2 instead. Using PC1 only ignores 65.5% of the total variance structure.
+
+**All-PC weights** sum absolute loadings across all 6 principal components, each weighted by its explained variance share:
+
+$$w_j = \frac{\sum_{k=1}^{6} \lambda_k \cdot |loading_{jk}|}{\sum_j \sum_{k=1}^{6} \lambda_k \cdot |loading_{jk}|}$$
+
+Result: P1=16.6%, P2=17.6%, P3=17.2%, P4=18.4%, P5=15.5%, P6=14.8%. All pillars land between 14.8% and 18.4%.
+
+**Key finding — convergence to equal weights:** The All-PC approach produces weights nearly identical to the equal-weights baseline (16.7% each). This convergence is a substantive result: every pillar dominates at least one principal component, confirming that each dimension contributes unique information to the variance structure. No pillar is redundant. The equal-weights baseline is therefore not merely a convention — it is empirically validated by the All-PC approach.
+
+**Decision: All-PC PCA weights are used for the final index.**
+
+Rationale: All-PC is methodologically superior to both PC1-only (which ignores 65.5% of variance and near-excludes P5) and equal weights (which is a valid but assumption-based approach). Although All-PC results are numerically close to equal weights, they are grounded in the data rather than in the assumption of equal importance. The equal-weights baseline is retained in the notebook as a reference comparison.
+
+---
+
+### 12.7 Final index
+
+**`pca_all_score` — variance-weighted All-PC PCA index — is the final AI Literacy Gap Index.**
+
+The equal-weights `index_score` is retained as baseline reference. Both are saved in `data/processed/ai_literacy_gap_index.csv`.
+
+---
+
+## 13. Clustering — Risk Profile Typology (2026-06-02)
+
+Clustering is performed in `04_clustering.ipynb`. The goal is to identify **what kind** of AI literacy gap risk a region faces, not how much — that is answered by the index. K-Means is an unsupervised learning method: no target labels are provided; the algorithm finds structure in the pillar profiles autonomously.
+
+**Input:** `data/processed/ai_literacy_gap_index.csv` — P1_norm–P6_norm columns (Min-Max normalised in `03_index_construction.ipynb`, no further normalisation applied in this notebook).
+
+**Output:** `data/processed/ai_literacy_gap_index_clustered.csv` — adds `cluster_label` and `cluster_id` columns.
+
+---
+
+### 13.1 NaN handling — P5 country-level mean imputation
+
+**Decision:** P5_norm missing values (7 regions: DE8, FRM, PL2, PL7, PL8, PL9, PT3) are imputed with the mean P5_norm of other available NUTS-1 regions in the same country, not the EU27 mean.
+
+**Rationale:** Labour market structures are country-specific. The country peer is a much closer proxy than the EU27 average. The difference is largest for PT3 (Madeira): global mean = 0.271 vs. Portuguese mean = 0.060 — a gap of 0.21 normalised units. Portugal's low unemployment among the low-educated (tourism and agricultural employment) should be reflected in the imputed value for Madeira. Imputation is applied only to the clustering step; original NaN values are preserved in the output file.
+
+| Region | Imputed value (country mean) | Global mean | Difference |
+|---|---|---|---|
+| PT3 | 0.060 | 0.271 | −0.211 |
+| DE8 | 0.187 | 0.271 | −0.084 |
+| FRM | 0.310 | 0.271 | +0.039 |
+| PL2 / PL7 / PL8 / PL9 | 0.229 | 0.271 | −0.042 |
+
+**Alternatives rejected:** Global mean imputation (methodologically weaker, overestimates unemployment for Portugal and Germany); dropping 7 regions (loses all remaining Polish NUTS-1 regions).
+
+---
+
+### 13.2 Optimal cluster count — k=5
+
+**Method:** Elbow (inertia) and Silhouette score tested for k=2–8 using the country-level imputed feature matrix.
+
+| k | Inertia | Silhouette |
+|---|---|---|
+| 2 | 15.78 | 0.278 |
+| 3 | 12.75 | 0.238 |
+| 4 | 11.09 | 0.189 |
+| **5** | **9.73** | **0.200** |
+| 6 | 8.74 | 0.178 |
+| 7 | 8.02 | 0.218 |
+| 8 | 7.20 | 0.222 |
+
+**Decision:** k = 5.
+
+**Rationale:** The decisive argument is not the marginal silhouette improvement (0.189 → 0.200) but the analytical quality of the split. k=4 merges two structurally different high-risk types into one cluster. In k=5 these separate into two distinct pillar fingerprints: one characterised by elevated P3+P2 (education-poverty trap) alongside high P4, and another by elevated P1+P6 (digital skills gap and aging demographics) alongside very high P4. These have different policy implications and should not be conflated. The exploratory side-by-side heatmap (k=4 vs. k=5) in the notebook makes this split visually apparent.
+
+**Alternatives rejected:** k=2 (highest silhouette at 0.278 but too coarse); k=4 (conflates the two highest-risk profiles); k=6+ (silhouette does not improve meaningfully, clusters become small and unstable).
+
+---
+
+### 13.3 K-Means configuration
+
+`KMeans(n_clusters=5, random_state=42, n_init=20)` — 20 random initialisations, best result kept. Deterministic due to fixed random seed.
+
+Cluster IDs (0–4) are assigned first; semantic names are derived in a subsequent step after inspecting the pillar profiles, so that names follow from evidence rather than being assumed upfront.
+
+---
+
+### 13.4 Cluster naming — derived from pillar profiles
+
+Names were assigned after inspecting the mean normalised pillar score per cluster (profile table + heatmap in Step 5 of the notebook). Names describe the **structural pattern** of the cluster, not the geographic location of its members — two regions in different parts of Europe with the same pillar fingerprint fall into the same cluster.
+
+| Cluster ID | Dominant pillars | Name assigned |
+|---|---|---|
+| 0 | P3 (0.74), P4 (0.77), P2 (0.69) | Education & Poverty Trap |
+| 3 | P4 (0.87), P1 (0.71), P6 (0.66) | Digital & Retraining Deficit |
+| 2 | P4 (0.76), P6 (0.64) elevated; P2, P3, P5 low | Ageing Workforce & Training Gap |
+| 1 | P5 (0.66) highest; P1 (0.31) lowest of all clusters | Selective Labour Exclusion |
+| 4 | All pillars low | Low Structural Risk |
+
+---
+
+### 13.5 Cluster profiles and interpretations
+
+| Cluster | n | Avg. risk score | Key finding |
+|---|---|---|---|
+| Education & Poverty Trap | 8 | 0.612 | Poverty and low educational attainment reinforce each other. Low retraining participation (P4) is a consequence, not an independent driver. The AI literacy gap is broad and structurally embedded. |
+| Digital & Retraining Deficit | 16 | 0.559 | Core problem is absent digital skills combined with near-zero retraining participation and an aging population. Poverty and low education are not elevated — the risk is specifically about digital competence and failure to update skills over time. |
+| Ageing Workforce & Training Gap | 40 | 0.416 | Largest cluster. P4 and P6 are clearly elevated but poverty and low education are not. These regions have not fallen into structural deprivation, but their aging workforce participates less in retraining. Risk is gradual and diffuse rather than acute. |
+| Selective Labour Exclusion | 7 | 0.362 | Most counter-intuitive cluster. Low poverty (P2=0.32), lowest low-education share of all clusters (P3=0.15), good digital skills (P1=0.31), and lowest lifelong learning gap (P4=0.32). Yet unemployment among the low-educated (P5=0.66) is the highest of all clusters. A well-functioning society with a concentrated blind spot: the few without qualifications fall through every net. Policy implication: not infrastructure rebuilding but targeted outreach to a small, hard-to-reach group. |
+| Low Structural Risk | 16 | 0.321 | Lowest risk across all dimensions. Faces the same long-term challenges as the rest of Europe but from a structurally stronger position. |
+
+**Note on "Selective Labour Exclusion":** This cluster is analytically important precisely because it contradicts the expected pattern. High unemployment among the low-educated coexists with strong overall digital performance, low poverty, and active retraining systems. The risk is not systemic — it is selective and concentrated. This requires a fundamentally different policy response than the other four clusters.

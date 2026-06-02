@@ -1,4 +1,7 @@
 asttokens==3.0.1
+matplotlib==3.10.9
+scikit-learn==1.8.0
+seaborn==0.13.2
 certifi==2026.5.20
 charset-normalizer==3.4.7
 colorama==0.4.6
