@@ -1,3 +1,11 @@
+# environment
 /venv
+.envrc
 
+# data
 /data
+
+# harness
+CLAUDE.md
+ANALYSIS.md
+/.claude/
