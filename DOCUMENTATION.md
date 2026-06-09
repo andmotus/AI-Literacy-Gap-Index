@@ -467,3 +467,62 @@ Names were assigned after inspecting the mean normalised pillar score per cluste
 | Low Structural Risk | 16 | 0.321 | Lowest risk across all dimensions. Faces the same long-term challenges as the rest of Europe but from a structurally stronger position. |
 
 **Note on "Selective Labour Exclusion":** This cluster is analytically important precisely because it contradicts the expected pattern. High unemployment among the low-educated coexists with strong overall digital performance, low poverty, and active retraining systems. The risk is not systemic — it is selective and concentrated. This requires a fundamentally different policy response than the other four clusters.
+
+---
+
+## 14. Classification — AI Literacy Gap Risk Drivers (2026-06-09)
+
+Risk driver analysis performed in `05_classification.ipynb`. A logistic regression classifier was trained on raw pillar values to identify which structural indicators most strongly predict high AI literacy gap risk.
+
+### 14.1 Methodological decisions
+
+**Target variable:** Top third of `ai_literacy_gap_index` = High Risk (29 regions), rest = Low Risk (58 regions). The threshold is computed dynamically as the 2/3 quantile.
+
+**Why `ai_literacy_gap_index` and not `baseline_score`:** The index is our final analytical product. A mathematical relationship between raw features and target exists for both score variants (because the index is a linear combination of normalised pillar values, which are linear transformations of the raw features). Switching to the equal-weights baseline does not eliminate this relationship — it only changes weights from near-equal (14.8–18.4 %) to exactly equal (16.7 %), affecting the High Risk label for only 2 of 87 regions. The choice of target has no meaningful impact on findings; the relevant question is which raw pillar values drive risk in our index.
+
+**Features:** Raw pillar values in original Eurostat units (%), not normalised. Standardised with `StandardScaler` inside a `sklearn Pipeline` to make coefficients comparable across pillars and to prevent data leakage (scaler fitted on training set only).
+
+**NaN handling:** P5 missing for 7 regions — country-level mean imputation applied, consistent with `04_clustering.ipynb` (Section 13.1). All 87 EU regions retained.
+
+**Split:** 70/30 stratified on target, `random_state=42`.
+
+### 14.2 Model performance
+
+| Metric | Value |
+|---|---|
+| Test set accuracy | 0.96 |
+| Test set F1 (High Risk) | 0.94 |
+| 5-fold CV mean F1 | 0.88 ± 0.12 |
+
+The model classifies 26 of 27 test regions correctly. Cross-validation variance (±0.12) is expected given n=87 and reflects fold-level randomness, not model instability.
+
+### 14.3 Findings
+
+**Standardised logistic regression coefficients:**
+
+| Rank | Pillar | Coefficient |
+|---|---|---|
+| 1 | P1 — Digital Skills | −2.09 |
+| 2 | P2 — Poverty | +1.10 |
+| 3 | P5 — Unemployment | +1.01 |
+| 4 | P4 — Lifelong Learning | −0.95 |
+| 5 | P3 — Low Education | +0.89 |
+| 6 | P6 — Demographics | +0.42 |
+
+**Finding 1 — P1 dominates with a qualitative gap:** Coefficient −2.09, nearly twice the next strongest pillar. 48 of 87 EU regions have P1 as their individual top driver. Investing in digital competence has roughly double the risk-reduction leverage of any other single intervention.
+
+**Finding 2 — No clear second lever:** P2 through P5 span coefficients 0.89–1.10. The range of 0.21 is not statistically meaningful at n=87. Structural deprivation is multidimensional at this level; no single second intervention priority emerges from the data.
+
+**Finding 3 — P1 + P2 is the most common driver pair:** 16 regions are primarily driven by the combination of low digital skills and high poverty. P1 + P4 (Lifelong Learning) follows with 11 regions. P2 + P3 without P1 accounts for 7 regions — these are the Education & Poverty Trap cluster regions where a poverty-education cycle dominates independently of digital skills.
+
+**Finding 4 — P6 (Demographics) is the weakest predictor:** Coefficient +0.42, the only pillar clearly separated from the rest. P6 does not discriminate between high-risk and low-risk regions because the EU ages uniformly — 75 % of regions fall within a 3.9 percentage-point band (20–24 % share aged 65+). P6 is a universal pressure on every region, not a differentiating factor between them.
+
+### 14.4 Data limitation identified
+
+Age-specific digital skills at NUTS-1 level are unavailable in Eurostat. The national-level dataset `isoc_sk_dskl_i` provides elderly digital skills breakdowns (Y55_74, Y65_74) but was last updated in 2019 — incompatible with the 2025 reference year. A country-level elderly digital skills proxy imputed to NUTS-1 regions would be a valid future enhancement: since P6 (elderly share) is near-uniform across regions, applying national values within a country would not distort regional variation, while capturing the genuine cross-country difference in elderly digital competence.
+
+### 14.5 Output file
+
+| File | Location | Content |
+|---|---|---|
+| `logistic_regression_contributions.csv` | `data/processed/` | Per-region pillar contributions, top driver, driver pair — input for dashboard tooltip |
