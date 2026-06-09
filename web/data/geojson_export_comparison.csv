@@ -1,0 +1,5 @@
+version,simplification_tolerance_degrees,path,file_size_mb,n_regions,n_with_index_data,n_missing_index_data,n_outermost_regions
+full,0.0,web\data\nuts1_ai_literacy_gap_full.geojson,9.31,92,87,5,4
+simplified_001,0.01,web\data\nuts1_ai_literacy_gap_simplified_001.geojson,2.483,92,87,5,4
+simplified_002,0.02,web\data\nuts1_ai_literacy_gap_simplified_002.geojson,1.892,92,87,5,4
+simplified_005,0.05,web\data\nuts1_ai_literacy_gap_simplified_005.geojson,1.505,92,87,5,4
