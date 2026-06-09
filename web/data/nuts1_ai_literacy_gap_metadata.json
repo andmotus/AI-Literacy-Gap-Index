@@ -1,0 +1,12 @@
+{
+  "selected_geometry_version": "simplified_001",
+  "final_geojson_file": "web\\data\\nuts1_ai_literacy_gap.geojson",
+  "file_size_mb": 2.483,
+  "n_regions_total": 92,
+  "n_regions_with_index_data": 87,
+  "n_regions_without_index_data": 5,
+  "n_outermost_regions": 4,
+  "crs": "EPSG:4326",
+  "intended_use": "Homepage-ready GeoJSON for interactive NUTS-1 web map",
+  "fallback_geometry_version": "simplified_002"
+}
