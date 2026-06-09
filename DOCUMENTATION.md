@@ -2,149 +2,146 @@
 
 This file serves as the single source of truth for all analytical decisions, code review findings, and pipeline changes made throughout the project.
 
-Sections 1–8 document the original analytical decisions made during EDA (in German, as authored).
-Sections 9+ document subsequent findings and changes (in English, per project language convention in ANALYSIS.md).
-
 ---
 
 ## Original analytical decisions (EDA phase)
 
 ---
 
-## 1. Referenzjahr
+## 1. Reference Year
 
-**Situation:** Das Anker-Dataset (`isoc_r_dskl_i`) hat ausschließlich 2025-Daten. Der Index wird daher eine Querschnittsanalyse, kein Trendprodukt.
+**Situation:** The anchor dataset (`isoc_r_dskl_i`) has data for 2025 only. The index is therefore a cross-sectional analysis, not a trend product.
 
-**Entscheidung nötig:** Für alle anderen Datasets (Poverty, Education, Lifelong Learning, Unemployment, AI Adoption) muss ein Referenzjahr festgelegt werden. Fallback-Regel bei fehlenden Werten für das Referenzjahr definieren (z.B. most-recent available ≤ Referenzjahr).
+**Decision needed:** A reference year must be defined for all other datasets (Poverty, Education, Lifelong Learning, Unemployment, AI Adoption). A fallback rule must be defined for missing values in the reference year (e.g. most-recent available ≤ reference year).
 
-**Status:** [x] entschieden — 2025
+**Status:** [x] decided — 2025
 
-**Begründung:** Digital Skills (Anker-Dataset) ist ausschließlich in 2025 verfügbar. Alle anderen Datasets werden auf 2025 gefiltert, um Zeitversatz zu vermeiden. Einzig die Schweiz (CH0) fehlt in Poverty 2025 vs. 2024 — als Nicht-EU-Land für den Index nicht kritisch.
+**Rationale:** Digital Skills (anchor dataset) is available for 2025 only. All other datasets are filtered to 2025 to avoid temporal misalignment. The only gap is Switzerland (CH0), which is missing from Poverty 2025 vs. 2024 — not critical for the index as a non-EU country.
 
 ---
 
 ## 2. Unit in Digital Skills: `PC_IND` vs. `PC_IND_IU3`
 
-**Situation:** Das Digital-Skills-Dataset enthält zwei konzeptuell verschiedene Nenner:
-- `PC_IND` — Anteil aller Individuen (inkl. Nicht-Internet-Nutzer)
-- `PC_IND_IU3` — Anteil der Individuen, die das Internet in den letzten 3 Monaten genutzt haben
+**Situation:** The Digital Skills dataset contains two conceptually different denominators:
+- `PC_IND` — share of all individuals (including non-internet users)
+- `PC_IND_IU3` — share of individuals who used the internet in the last 3 months
 
-**Empfehlung:** `PC_IND` für den Gap-Index, weil Nicht-Internet-Nutzer Teil der Lücke sind, nicht Ausnahmen davon. `PC_IND_IU3` wäre geeignet für eine Analyse der Skill-Qualität unter aktiven Nutzern.
+**Recommendation:** `PC_IND` for the gap index, because non-internet users are part of the gap, not exceptions to it. `PC_IND_IU3` would be suitable for an analysis of skill quality among active users.
 
-**Indikator-Empfehlung:** `I_DSK2_BAB` (basic or above basic) als DESI-Standardindikator, oder `I_DSK2_AB` (above basic only) für einen strengeren Maßstab.
+**Indicator recommendation:** `I_DSK2_BAB` (basic or above basic) as the DESI standard indicator, or `I_DSK2_AB` (above basic only) for a stricter benchmark.
 
-**Status:** [x] entschieden — `I_DSK2_BAB` + `PC_IND`
+**Status:** [x] decided — `I_DSK2_BAB` + `PC_IND`
 
-**Begründung:** Nicht-Internet-Nutzer sind Teil der AI Literacy Gap, nicht außerhalb davon. `PC_IND` zählt sie im Nenner mit. `I_DSK2_BAB` (DESI-Standard) bietet die größte regionale Spreizung (19–85 %) und ist international etabliert.
+**Rationale:** Non-internet users are part of the AI literacy gap, not outside it. `PC_IND` includes them in the denominator. `I_DSK2_BAB` (DESI standard) offers the widest regional spread (19–85 %) and is internationally established.
 
 ---
 
-## 3. Poverty: Coverage-Cutoff und Datenqualitäts-Flags
+## 3. Poverty: Coverage Cut-off and Data Quality Flags
 
-**Situation:** Im Referenzjahr 2025 haben nur zwei Regionen eine Coverage unter 100 %:
+**Situation:** In the reference year 2025, only two regions have coverage below 100 %:
 
-| Region | Coverage | Fehlende NUTS-2-Region | Poverty-Wert (berechnet) |
+| Region | Coverage | Missing NUTS-2 region | Poverty rate (calculated) |
 |---|---|---|---|
 | FI1 — Manner-Suomi | 75.0 % | FI19 Länsi-Suomi | 16.7 % |
 | FRY — Régions Ultrapériphériques | 85.7 % | FRY5 Mayotte | 41.4 % |
 
-**Status:** [x] entschieden
+**Status:** [x] decided
 
-**FI1 — kein Flag, Wert wird unverändert verwendet**
-Länsi-Suomi (Westfinnland, Tampere/Turku) ist wirtschaftlich und sozial homogen mit den drei abgedeckten Regionen. Die geschätzte Abweichung vom wahren Wert beträgt < 0.5 Prozentpunkte. Der berechnete Wert ist eine valide Näherung.
+**FI1 — no flag, value used as-is**
+Länsi-Suomi (western Finland, Tampere/Turku) is economically and socially homogeneous with the three covered sub-regions. The estimated deviation from the true value is < 0.5 percentage points. The calculated value is a valid approximation.
 
-**FRY — Flag erforderlich, Wert wird mit Caveat verwendet**
-Die fehlende Region Mayotte ist das ärmste französische Territorium (bekannt aus INSEE-Berichten, jedoch ohne verifizierte EU-SILC-konforme Rate). Die abgedeckten Regionen liegen bei 31–55 % — Mayotte liegt strukturell deutlich darüber. Der berechnete Wert von 41.4 % unterschätzt die wahre NUTS-1-Armutsrate wahrscheinlich signifikant. Externe Daten werden nicht ergänzt, da eine nicht-EU-SILC-Quelle die methodische Konsistenz des Index brechen würde.
+**FRY — flag required, value used with caveat**
+The missing sub-region Mayotte is the poorest French territory (documented in INSEE reports, but without a verified EU-SILC-compliant rate). The covered sub-regions range from 31–55 % — Mayotte is structurally well above that. The calculated value of 41.4 % likely significantly underestimates the true NUTS-1 poverty rate. No external data will be added, as a non-EU-SILC source would break the methodological consistency of the index.
 
-**→ Hinweis für UI / Kollege Kartendarstellung:**
-FRY muss in der Karte visuell markiert werden (z.B. Schraffur, Sternchen, Tooltip). Empfohlener Hinweistext: *"Daten basieren auf 4 von 5 Subregionen. Mayotte fehlt — tatsächliche Armutsrate wahrscheinlich signifikant höher (Mayotte ist das ärmste französische Territorium, EU-SILC-konforme Rate nicht verfügbar)."*
+**→ Note for UI / map visualisation:**
+FRY must be visually flagged on the map (e.g. hatching, asterisk, tooltip). Recommended tooltip text: *"Data based on 4 of 5 sub-regions. Mayotte is missing — actual poverty rate likely significantly higher (Mayotte is the poorest French territory; no EU-SILC-compliant rate available)."*
 
 ---
 
-## 4. AI Adoption: Pflicht-Pillar oder optional?
+## 4. AI Adoption: Mandatory Pillar or Optional?
 
-**Situation:** Kritischer Scope-Konflikt zwischen den Datasets:
+**Situation:** Critical scope conflict between datasets:
 
-| | Regionen |
+| | Regions |
 |---|---|
-| Digital Skills (Anker) | 88 NUTS-1 |
+| Digital Skills (anchor) | 88 NUTS-1 |
 | Enterprise AI Adoption | 38 NUTS-1 |
-| Überschneidung | 32 NUTS-1 |
+| Overlap | 32 NUTS-1 |
 
-AI Adoption als Pflicht-Pillar reduziert den Index von 88 auf 32 Regionen (−64 %).
+Including AI Adoption as a mandatory pillar reduces the index from 88 to 32 regions (−64 %).
 
-**Optionen:**
-- A) AI Adoption optional → Regionen ohne Daten bekommen NaN für diesen Pillar, bleiben im Index
-- B) Zwei Index-Versionen: vollständig (32 Regionen, alle 7 Pillars) + ohne AI-Pillar (88 Regionen, 6 Pillars)
-- C) AI Adoption nur als Country-Level-Proxy (verliert Regionalität)
+**Options:**
+- A) AI Adoption optional → regions without data receive NaN for this pillar but remain in the index
+- B) Two index versions: full (32 regions, all 7 pillars) + without AI pillar (88 regions, 6 pillars)
+- C) AI Adoption as country-level proxy only (loses regional granularity)
 
-**Status:** [x] entschieden — Pillar wird weggelassen
+**Status:** [x] decided — pillar dropped
 
-**Begründung:** Zwei Gründe. Konzeptionell misst Enterprise AI Adoption Unternehmensverhalten, nicht menschliche KI-Literacy — das ist eine andere Analyseebene als die übrigen Pillars. Datenseitig fehlen DE, FR, IT, NL komplett, weil diese Länder nicht auf NUTS-1 melden — nicht weil ihre Adoptionsrate null ist. Ein NaN für diese Regionen würde im Index fälschlicherweise "kein Signal" bedeuten, obwohl die Lücke methodisch ist, nicht inhaltlich. Der Index bleibt mit 6 Pillars konzeptionell vollständig. Der Demand-Side-Blickwinkel (Exposure-Druck durch Unternehmens-KI) wird als bewusster Scope-Ausschluss dokumentiert.
-
----
-
-## 5. Education: Indikator und Altersgruppe
-
-**Status:** [x] entschieden — `ED0-2` + `Y25-64`
-
-**Begründung:** ED0-2 (Anteil der Bevölkerung ohne weiterführende Qualifikation — kein Abschluss bis Realschule) ist der direkteste Risikoindikator für strukturelle Vulnerabilität im digitalen Wandel. Wer nie über die Pflichtschule hinausgegangen ist, hat weniger Übung im Weiterlernen und Umschulen. Der Selektionseffekt stützt dies: lernbereite Realschulabsolventen setzen ihre Ausbildung in der Regel fort und landen in ED3-8. Y25-64 wurde gewählt weil KI-Disruption alle Erwerbstätigen betrifft — nicht nur Junge. Es ist die einzige Altersgruppe die das vollständige Bild der Arbeitsbevölkerung zeigt (EU-Standard). Y20-24 ist verzerrt (viele noch in Ausbildung), Y25-34 und Y30-34 sind zu enge Ausschnitte.
-
-**Richtung:** höherer Wert = mehr Menschen ohne weiterführende Qualifikation = größere AI Literacy Gap → muss beim Index-Bau invertiert werden.
-
-**Alternativen geprüft:** ED3-8 wäre dasselbe Signal mit umgekehrter Richtung (kein inhaltlicher Unterschied). ED5-8 (nur Tertiär) wäre zu streng und würde Berufsausbildung ignorieren.
-
-**Datenlimitation:** Eurostat stellt für diesen Indikator keine Altersgruppe über Y25-64 bereit. Menschen über 65 sind nicht abgedeckt — das ist eine Einschränkung der Quelldaten, keine analytische Wahl. Digital Skills und Poverty enthalten gar keine Altersaufschlüsselung (Gesamtbevölkerung).
+**Rationale:** Two reasons. Conceptually, Enterprise AI Adoption measures business behaviour, not human AI literacy — a different level of analysis from the other pillars. On the data side, DE, FR, IT, and NL are entirely absent because these countries do not report at NUTS-1 level — not because their adoption rate is zero. A NaN for these regions would incorrectly signal "no risk" in the index when the gap is methodological, not substantive. The index remains conceptually complete with 6 pillars. The demand-side perspective (exposure pressure from enterprise AI) is documented as a deliberate scope exclusion.
 
 ---
 
-## 6. Lifelong Learning: Altersgruppe
+## 5. Education: Indicator and Age Group
 
-**Status:** [x] entschieden — `Y25-64` + `PC` + `sex=T`
+**Status:** [x] decided — `ED0-2` + `Y25-64`
 
-**Begründung:** Zwei Altersgruppen verfügbar: Y18-64 und Y25-64 — beide mit identischer Coverage (109/123 NUTS-1 in 2025) und r = 0.986 (Pearson) / 0.980 (Spearman). Y25-64 gewählt aus zwei Gründen: (1) Konsistenz mit Education-Pillar (ebenfalls Y25-64, gleiche Zielgruppe); (2) konzeptuelle Reinheit — 18–24-Jährige sind teils noch in Erstausbildung, was die Abgrenzung zu adult learning unschärfer macht.
+**Rationale:** ED0-2 (share of the population without post-compulsory qualifications — no qualification through lower secondary) is the most direct risk indicator for structural vulnerability in the digital transition. Those who never progressed beyond compulsory schooling have had less practice with continuous learning and retraining. The selection effect supports this: school-leavers who are willing to learn typically continue into ED3-8. Y25-64 was chosen because AI disruption affects all working-age adults, not only the young. It is the only age group that provides a complete picture of the working-age population (EU standard). Y20-24 is biased (many still in initial education); Y25-34 and Y30-34 are too narrow a window.
 
-**Richtung:** höherer Wert = mehr Weiterbildung = geringeres Risiko → muss beim Index-Bau invertiert werden.
+**Direction:** higher value = more people without post-compulsory qualifications = larger AI literacy gap → must be inverted during index construction.
 
-**Fehlende Regionen 2025:** 12 UK-Regionen (systematische Lücke post-Brexit), IS0, ME0.
+**Alternatives considered:** ED3-8 carries the same signal with the opposite direction (no substantive difference). ED5-8 (tertiary only) would be too strict and would ignore vocational qualifications.
 
-**Datenlimitation — 4-Wochen-Fenster:** Der LFS-Indikator misst, ob jemand in den 4 Wochen vor dem Interview an Bildung oder Training teilgenommen hat. Das ist ein Snapshot — wer intensiv, aber selten lernt (z.B. einmal jährlich eine Woche Blockseminar), wird nicht erfasst, sofern der Befragungszeitpunkt nicht zufällig in dieses Fenster fällt. Ein 12-Monats-Fenster wäre methodisch stärker. Das Adult Education Survey (AES) verwendet dieses längere Fenster, ist aber nur auf **Länderebene** verfügbar (kein NUTS-1) und erscheint nur ca. alle 5 Jahre (2007, 2011, 2016, 2022) — damit für diesen Index nicht nutzbar. `trng_lfse_04` ist die einzige verfügbare regionale Jahreszeitreihe. Der EU-DESI-Standardstatus sichert internationale Vergleichbarkeit. Diese Einschränkung muss in der Interpretation des Index explizit ausgewiesen werden.
-
----
-
-## 7. Labour Market Vulnerability: Datensatz und Indikator
-
-**Status:** [x] entschieden — `lfst_r_lfu3rt` + `ED0-2` + `Y15-74` + `sex=T`
-
-**Datensatz-Wechsel:** Ursprünglich geplant war `lfst_r_lfu3pers` (Arbeitslose in Tausend Personen). Dieser wurde verworfen, weil absolute Zahlen Regionen unterschiedlicher Größe nicht vergleichbar machen. Ersetzt durch `lfst_r_lfu3rt` (Arbeitslosenrate in %) — gleiches Erhebungsdesign, richtiger Nenner. ~~Datensatz direkt in `02_EDA.ipynb` nachgeladen~~ → moved to `01_load_data.ipynb` (see Section 10).
-
-**Indikator:** Arbeitslosenrate unter Niedrigqualifizierten (ED0-2, Y15-74) — misst, ob eine Region ihre am wenigsten qualifizierte Bevölkerung strukturell vom Arbeitsmarkt ausschließt. Ergänzt Education (Qualifikationsstruktur) und Poverty (Ergebnis) um die Transmissionsebene: wo trifft niedrige Qualifikation auf aktuelle Erwerbslosigkeit?
-
-**Altersgruppe Y15-74:** Beste Coverage (99/109 NUTS-1 in 2025), niedrigste u-Flag-Rate. Engere Altersgruppen haben u-Flag-Raten über 40 %.
-
-**Fehlende Regionen (10):** DE5, DE8, DEC, FI2, FRM, PL2/PL7/PL8/PL9, PT3 — alle u-flagged (kleine Stichprobe). UK komplett absent (post-Brexit).
-
-**Flag-Caveats:** 20 Regionen mit `d`-Flag (Spanien + FRY, Definition abweichend), 12 mit `u`-Flag aber Wert vorhanden — werden mit Hinweis verwendet.
+**Data limitation:** Eurostat does not provide an age group above Y25-64 for this indicator. People over 65 are not covered — this is a source data constraint, not an analytical choice. Digital Skills and Poverty contain no age breakdown at all (total population).
 
 ---
 
-## 8. Index-Scope: EU27
+## 6. Lifelong Learning: Age Group
 
-**Status:** [x] entschieden — EU27, alle 27 Mitgliedsstaaten
+**Status:** [x] decided — `Y25-64` + `PC` + `sex=T`
 
-**Begründung:** Gemeinsamer Rechts- und Politikrahmen (EU AI Act, Digital Decade, Kohäsionspolitik) ermöglicht handlungsfähige Empfehlungen. Nicht-EU-Länder (TR, NO, CH, RS, ME, MK, AL, IS, UK) werden ausgeschlossen.
+**Rationale:** Two age groups are available: Y18-64 and Y25-64 — both with identical coverage (109/123 NUTS-1 in 2025) and r = 0.986 (Pearson) / 0.980 (Spearman). Y25-64 was chosen for two reasons: (1) consistency with the Education pillar (also Y25-64, same target population); (2) conceptual clarity — 18–24 year-olds are partly still in initial education, which blurs the boundary with adult learning.
 
-**Datentechnische Lösungen:**
-- 13 EU-Länder mit nur einer NUTS-1 Region fehlten im Anker (Digital Skills), weil sie mit 2-stelligem Ländercode (z.B. `DK`) statt 3-stelligem NUTS-1-Code (`DK0`) gemeldet werden. Mapping angewendet. FI→FI1 (Manner-Suomi, 99.5 % der Bevölkerung; FI2/Åland ausgeschlossen).
-- 5 EU-Länder (CY, EE, LU, LV, MT) fehlen in Poverty-Dataset `tgs00107`. Ersetzt durch `ilc_peps01n` (nationale AROPE-Rate, selbe EU-SILC-Methodik, selbes Referenzjahr). Da diese Länder je eine einzige NUTS-1 Region haben gilt: nationaler Wert = NUTS-1 Wert.
+**Direction:** higher value = more participation in continuing education = lower risk → must be inverted during index construction.
 
-**Ausgeschlossene Regionen trotz EU-Mitgliedschaft:** 7 Regionen ohne P5 (Unemployment) wegen zu kleiner LFS-Stichprobe: DE8, FRM, PL2, PL7, PL8, PL9, PT3. Alle gehören zu Ländern die durch andere NUTS-1 Regionen weiterhin vertreten sind. Alternative geprüft: TOTAL-Arbeitslosenrate (alle Bildungsniveaus) wäre für alle 7 verfügbar — abgelehnt, weil ED0-2-Raten strukturell immer höher als TOTAL sind und der Fallback diese Regionen systematisch als "weniger vulnerabel" darstellen würde. NaN ist methodisch ehrlicher.
+**Missing regions 2025:** 12 UK regions (systematic gap post-Brexit), IS0, ME0.
+
+**Data limitation — 4-week window:** The LFS indicator measures whether a person participated in education or training in the 4 weeks before the interview. This is a snapshot — someone who learns intensively but infrequently (e.g. one week of block seminars per year) will not be captured unless the interview happens to fall within that window. A 12-month window would be methodologically stronger. The Adult Education Survey (AES) uses this longer window but is only available at **country level** (no NUTS-1) and is published approximately every 5 years (2007, 2011, 2016, 2022) — making it unsuitable for this index. `trng_lfse_04` is the only available regional annual time series. Its EU-DESI standard status ensures international comparability. This limitation must be stated explicitly in the interpretation of the index.
 
 ---
 
-## Bonus: Unemployment-Flags (erledigt)
+## 7. Labour Market Vulnerability: Dataset and Indicator
 
-**Status:** [x] geprüft in EDA — `b`-Flags irrelevant für Einzeljahresanalyse. `u`-Flags konzentrieren sich auf schmale Altersgruppen (Y25-34, Y55-64 mit >40 % u-Rate) → Y15-74 als einzig tragfähige Altersgruppe gewählt. Außerdem: `lfst_r_lfu3pers` durch `lfst_r_lfu3rt` ersetzt (Raten statt Absolutzahlen).
+**Status:** [x] decided — `lfst_r_lfu3rt` + `ED0-2` + `Y15-74` + `sex=T`
+
+**Dataset change:** The original plan used `lfst_r_lfu3pers` (unemployed persons in thousands). This was rejected because absolute counts are not comparable across regions of different sizes. Replaced by `lfst_r_lfu3rt` (unemployment rate in %) — same survey design, correct denominator. ~~Dataset loaded directly in `02_EDA.ipynb`~~ → moved to `01_load_data.ipynb` (see Section 10).
+
+**Indicator:** Unemployment rate among the low-qualified (ED0-2, Y15-74) — measures whether a region structurally excludes its least-qualified population from the labour market. Complements Education (qualification structure) and Poverty (outcome) with the transmission layer: where does low qualification meet current unemployment?
+
+**Age group Y15-74:** Best coverage (99/109 NUTS-1 in 2025), lowest `u`-flag rate. Narrower age groups have `u`-flag rates above 40 %.
+
+**Missing regions (10):** DE5, DE8, DEC, FI2, FRM, PL2/PL7/PL8/PL9, PT3 — all `u`-flagged (small sample). UK entirely absent (post-Brexit).
+
+**Flag caveats:** 20 regions with `d`-flag (Spain + FRY, non-standard definition), 12 with `u`-flag but value present — used with a caveat note.
+
+---
+
+## 8. Index Scope: EU27
+
+**Status:** [x] decided — EU27, all 27 member states
+
+**Rationale:** A shared legal and policy framework (EU AI Act, Digital Decade, Cohesion Policy) enables actionable recommendations. Non-EU countries (TR, NO, CH, RS, ME, MK, AL, IS, UK) are excluded.
+
+**Technical data solutions:**
+- 13 EU countries with only one NUTS-1 region were missing from the anchor dataset (Digital Skills) because they report using a 2-character country code (e.g. `DK`) rather than the 3-character NUTS-1 code (`DK0`). A mapping was applied. FI→FI1 (Manner-Suomi, 99.5 % of population; FI2/Åland excluded).
+- 5 EU countries (CY, EE, LU, LV, MT) are absent from the poverty dataset `tgs00107`. Replaced with `ilc_peps01n` (national AROPE rate, same EU-SILC methodology, same reference year). As these countries each have a single NUTS-1 region, the national value equals the NUTS-1 value.
+
+**Regions excluded despite EU membership:** 7 regions without P5 (Unemployment) due to an LFS sample too small to produce reliable estimates: DE8, FRM, PL2, PL7, PL8, PL9, PT3. All belong to countries that remain represented through other NUTS-1 regions. Alternative considered: the TOTAL unemployment rate (all education levels) would be available for all 7 — rejected because ED0-2 rates are structurally always higher than TOTAL, so the fallback would systematically represent these regions as "less vulnerable". NaN is the methodologically honest choice.
+
+---
+
+## Bonus: Unemployment Flags (resolved)
+
+**Status:** [x] reviewed in EDA — `b`-flags are irrelevant for a single-year analysis. `u`-flags are concentrated in narrow age groups (Y25-34, Y55-64 with > 40 % `u`-rate) → Y15-74 selected as the only viable age group. Additionally: `lfst_r_lfu3pers` replaced by `lfst_r_lfu3rt` (rates instead of absolute counts).
 
 ---
 
