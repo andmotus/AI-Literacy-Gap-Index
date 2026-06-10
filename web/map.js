@@ -92,7 +92,6 @@ function updateRegionInfo(props) {
     <ul class="detail-list">
       <li><span>Rank</span><strong>${props.rank ?? "No data"}</strong></li>
       <li><span>Cluster</span><strong>${props.cluster_label ?? "No data"}</strong></li>
-      <li><span>Baseline score</span><strong>${formatNumber(props.baseline_score)}</strong></li>
       <li><span>Pillars available</span><strong>${props.pillars_available ?? "No data"}</strong></li>
       <li><span>P1 Digital skills risk</span><strong>${formatNumber(props.P1_norm)}</strong></li>
       <li><span>P2 Poverty risk</span><strong>${formatNumber(props.P2_norm)}</strong></li>
