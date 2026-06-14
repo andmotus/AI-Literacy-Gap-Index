@@ -15,4 +15,4 @@ ANALYSIS.md
 
 # python cache
 __pycache__/
-*.pyc
+*.pyc**/.DS_Store
