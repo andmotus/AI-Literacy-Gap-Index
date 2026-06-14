@@ -1,59 +1,55 @@
 """
-AI Literacy Gap Index — Cluster Case Studies
-Streamlit app explaining WHY each of the 5 regional clusters scores as it does.
+edvancing — AI Literacy Gap Index
+Single-page app: Map, Insights and About are all on this page,
+reachable via in-page anchor links in the navbar (#map, #insights, #about).
 """
 
 import json
+
 import pandas as pd
-import plotly.graph_objects as go
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
 from case_studies import (
     CASE_STUDIES,
-    CLUSTER_COLORS,
     CLUSTER_ORDER,
     EU27_AVERAGE,
     FEATURES,
     PILLAR_NAMES,
     PILLAR_SHORT,
 )
+from edv_theme import (
+    BLUE,
+    BLUE_DARK,
+    BLUE_LIGHT,
+    INK_MID,
+    SURFACE,
+    WHITE,
+    inject_edvancing_style,
+    render_navbar,
+)
 
 # -----------------------------
-# Page config & light styling
+# Page config
 # -----------------------------
 st.set_page_config(
-    page_title="AI Literacy Gap Index — Cluster Case Studies",
-    page_icon="🇪🇺",
+    page_title="edvancing — AI Literacy Gap Index",
+    page_icon="📊",
     layout="wide",
 )
 
-st.markdown(
-    """
-    <style>
-    .main { font-family: 'IBM Plex Sans', sans-serif; }
-    h1, h2, h3 { font-family: 'IBM Plex Sans', sans-serif; }
-    .driver-tag {
-        display: inline-block;
-        background-color: #2c3e50;
-        color: white;
-        border-radius: 4px;
-        padding: 2px 10px;
-        margin-right: 6px;
-        margin-bottom: 6px;
-        font-size: 0.85rem;
-    }
-    .region-card {
-        background-color: #f8f9fa;
-        border-left: 4px solid #2c3e50;
-        border-radius: 4px;
-        padding: 10px 14px;
-        margin-bottom: 8px;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+inject_edvancing_style()
+render_navbar()
+
+# Explicit brand color mapping per cluster name, as specified.
+CLUSTER_COLORS_BRAND = {
+    "Education & Poverty Trap": "#D45C00",        # orange
+    "Digital & Retraining Deficit": "#E8A020",    # yellow
+    "Ageing Workforce & Training Gap": "#6DB33F", # light green
+    "Selective Labour Exclusion": "#00A878",      # dark green
+    "Low Structural Risk": "#0085CA",             # blue (brand / best status)
+}
 
 
 # -----------------------------
@@ -66,12 +62,6 @@ def load_geojson(path: str = "data/nuts1_ai_literacy_gap.geojson"):
 
 
 def build_cluster_map(df, geojson, highlight_cluster: str | None = None):
-    """
-    Build a Plotly choropleth of all NUTS-1 regions colored by cluster_label.
-    If highlight_cluster is given, regions in other clusters are shown in grey
-    and only the selected cluster gets its color.
-    """
-    # Map geo -> cluster_label and index from our (corrected) dataframe
     geo_to_cluster = dict(zip(df["geo"], df["cluster_label"]))
     geo_to_index = dict(zip(df["geo"], df["ai_literacy_gap_index"]))
     geo_to_name = dict(zip(df["geo"], df["nuts1_name"]))
@@ -88,12 +78,12 @@ def build_cluster_map(df, geojson, highlight_cluster: str | None = None):
         locations.append(geo)
 
         if cluster is None:
-            z.append(-1)  # no index data -> grey
-            text.append(f"{feature['properties'].get('NAME_LATN', geo)}<br>No index data")
+            z.append(-1)
+            text.append(f"<b>{feature['properties'].get('NAME_LATN', geo)}</b><br>No index data")
             continue
 
         if highlight_cluster and cluster != highlight_cluster:
-            z.append(-1)  # not the selected cluster -> grey
+            z.append(-1)
         else:
             z.append(cluster_to_z[cluster])
 
@@ -105,10 +95,8 @@ def build_cluster_map(df, geojson, highlight_cluster: str | None = None):
             f"AI Literacy Gap Index: {idx:.2f}"
         )
 
-    # Build a discrete colorscale: -1 = grey, 0..4 = cluster colors
     n = len(CLUSTER_ORDER)
-    colors = ["#d9d9d9"] + [CLUSTER_COLORS[c] for c in CLUSTER_ORDER]
-    # colorscale needs values in [0,1]; map -1..n-1 onto that range
+    colors = ["#E5E9ED"] + [CLUSTER_COLORS_BRAND[c] for c in CLUSTER_ORDER]
     span = n + 1
     colorscale = []
     for i, c in enumerate(colors):
@@ -128,7 +116,7 @@ def build_cluster_map(df, geojson, highlight_cluster: str | None = None):
             showscale=False,
             text=text,
             hovertemplate="%{text}<extra></extra>",
-            marker_line_color="white",
+            marker_line_color=WHITE,
             marker_line_width=0.6,
         )
     )
@@ -137,15 +125,15 @@ def build_cluster_map(df, geojson, highlight_cluster: str | None = None):
         scope="europe",
         projection_type="natural earth",
         showcountries=True,
-        countrycolor="rgba(150,150,150,0.5)",
+        countrycolor="rgba(150,150,150,0.4)",
         showland=True,
-        landcolor="#f2f0e9",
+        landcolor="#EDF1F5",
         showocean=True,
-        oceancolor="#dceefb",
+        oceancolor=SURFACE,
         showlakes=True,
-        lakecolor="#dceefb",
+        lakecolor=SURFACE,
         showcoastlines=True,
-        coastlinecolor="rgba(150,150,150,0.6)",
+        coastlinecolor="rgba(150,150,150,0.5)",
         coastlinewidth=0.5,
         lataxis_range=[33, 71],
         lonaxis_range=[-12, 35],
@@ -158,7 +146,7 @@ def build_cluster_map(df, geojson, highlight_cluster: str | None = None):
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         dragmode=False,
-
+        font=dict(family="DM Sans, sans-serif", color=INK_MID),
     )
 
     return fig
@@ -175,32 +163,41 @@ def load_data():
 
 df = load_data()
 
-# Geo data for the map view - falls back gracefully if not present yet
 try:
     geojson = load_geojson("data/nuts1_ai_literacy_gap.geojson")
 except FileNotFoundError:
     geojson = None
 
-# -----------------------------
-# Header
-# -----------------------------
+
+# ════════════════════════════════════════════════════════════════
+# SECTION: MAP
+# ════════════════════════════════════════════════════════════════
+st.markdown('<div id="map"></div>', unsafe_allow_html=True)
+
 st.title("AI Literacy Gap Index")
 st.markdown(
-    "A composite risk index across 87 EU27 NUTS-1 regions, built from 6 pillars: "
-    "digital skills, poverty, education, lifelong learning, unemployment "
-    "(low-educated), and demographics. Regions are grouped into **5 clusters** "
-    "by *risk profile type* — not just *risk level*."
+    """
+    <div class="edv-section-intro">
+    A composite risk index across 87 EU27 NUTS-1 regions, built from 6 pillars:
+    digital skills, poverty, education, lifelong learning, unemployment
+    (low-educated), and demographics. Regions are grouped into <b>5 clusters</b>
+    by <i>risk profile type</i> — not just <i>risk level</i>. Use the map below
+    to explore individual regions, and scroll down to <b>Insights</b> for the
+    full cluster-by-cluster breakdown, or <b>About</b> for the project
+    background and methodology.
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
 
 st.markdown(
     """
-    <div style="background-color:#eef5fc; border-radius:8px; padding:14px 18px;
-                border-left:4px solid #1f77b4; margin-bottom:1rem;">
-    <b>How to use this page</b><br>
-    1. Hover or click a region on the map below to see its score, cluster, and risk profile.<br>
-    2. Scroll down to <b>Cluster case studies</b> and pick a tab to see why that group of
-    regions scores as it does, with example regions and policy suggestions.<br>
-    3. Open <b>More data</b> at the bottom for the full ranked list and cluster comparisons.
+    <div class="edv-info-card">
+    <b>How to use this map</b><br>
+    Hover or click a region to see its index score, cluster, and pillar breakdown.
+    Each cluster is shown in a different color — the legend below explains what
+    each color stands for. For the full explanation of why each cluster scores
+    as it does, scroll down to <b>Insights</b>.
     </div>
     """,
     unsafe_allow_html=True,
@@ -212,11 +209,18 @@ c2.metric("Clusters", "5")
 c3.metric("Highest index score", f"{df['ai_literacy_gap_index'].max():.3f}", "Isole (ITG) — most at risk")
 c4.metric("Lowest index score", f"{df['ai_literacy_gap_index'].min():.3f}", "West-Nederland (NL3) — least at risk")
 
-# -----------------------------
-# Map section - click a region for details
-# -----------------------------
 st.markdown("## Map of Europe — by cluster")
-st.caption("Click any region below to see its score, cluster, and pillar breakdown.")
+st.markdown(
+    """
+    <div class="edv-section-intro">
+    This map shows all 87 NUTS-1 regions colored by their assigned cluster.
+    edvancing's brand blue marks the strongest-performing cluster; colors
+    shift toward orange for clusters with higher structural risk. Click any
+    region to see its score, cluster, and pillar breakdown.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 if geojson is not None:
     fig_map = build_cluster_map(df, geojson)
@@ -231,9 +235,10 @@ if geojson is not None:
     legend_cols = st.columns(len(CLUSTER_ORDER))
     for col, cname in zip(legend_cols, CLUSTER_ORDER):
         col.markdown(
+            f'<div class="edv-legend-chip">'
             f'<span style="display:inline-block;width:12px;height:12px;'
-            f'background-color:{CLUSTER_COLORS[cname]};border-radius:2px;'
-            f'margin-right:6px;"></span>{cname}',
+            f'background-color:{CLUSTER_COLORS_BRAND[cname]};border-radius:3px;"></span>'
+            f'{cname}</div>',
             unsafe_allow_html=True,
         )
 
@@ -243,20 +248,18 @@ if geojson is not None:
         region_row = df[df["geo"] == clicked_geo]
         if not region_row.empty:
             r = region_row.iloc[0]
-            cluster_color = CLUSTER_COLORS[r["cluster_label"]]
+            cluster_color = CLUSTER_COLORS_BRAND[r["cluster_label"]]
             st.markdown(
                 f"""
-                <div style="background-color:#f8f9fa; border-radius:8px;
-                            padding:16px 20px; margin-top:0.5rem;
-                            border-left:5px solid {cluster_color};">
-                <div style="font-size:1.1rem; font-weight:600;">
+                <div class="edv-region-card" style="--cluster-color: {cluster_color};">
+                <div class="edv-region-name">
                     {r['nuts1_name']} ({r['geo']}, {r['country']})
                 </div>
-                <div style="margin-top:4px;">
+                <div class="edv-region-meta">
                     AI Literacy Gap Index: <b>{r['ai_literacy_gap_index']:.3f}</b>
                     &nbsp;&middot;&nbsp; Rank {int(r['rank'])} of 87
                 </div>
-                <div style="margin-top:4px;">
+                <div class="edv-region-meta">
                     Cluster: <b>{r['cluster_label']}</b>
                     &mdash; <i>{CASE_STUDIES[r['cluster_label']]['headline']}</i>
                 </div>
@@ -268,14 +271,13 @@ if geojson is not None:
                 f"{PILLAR_SHORT[f]}: {r[f]:.2f}" for f in FEATURES
             )
             st.markdown(
-                f'<div style="margin-top:6px; color:var(--color-text-secondary, #666); '
-                f'font-size:0.85rem;">{pillar_str}</div>',
+                f'<div class="edv-region-pillars">{pillar_str}</div>',
                 unsafe_allow_html=True,
             )
             st.markdown(
-                f"Go to the **{r['cluster_label']}** tab below to see why "
-                f"this region scores as it does, with example regions and "
-                f"a suggested policy angle."
+                f"For the full explanation of why **{r['cluster_label']}** regions "
+                f"score as they do — including example regions and policy "
+                f"suggestions — scroll down to **Insights**."
             )
     else:
         st.caption("Click any region on the map to see its index score, cluster, and pillar breakdown.")
@@ -286,15 +288,25 @@ else:
         "into `Streamlit_app/data/` to enable the map view."
     )
 
-# -----------------------------
-# Cluster case studies - tabs
-# -----------------------------
-st.markdown("## Cluster case studies")
+
+# ════════════════════════════════════════════════════════════════
+# SECTION: INSIGHTS
+# ════════════════════════════════════════════════════════════════
+st.markdown("---")
+st.markdown('<div id="insights"></div>', unsafe_allow_html=True)
+
+st.title("Insights")
 st.markdown(
-    "Each cluster groups regions with a **similar risk profile shape** — "
-    "not just a similar overall score. The chart for each cluster shows "
-    "its mean pillar scores against the EU27 average, which is the basis "
-    "for the 'why' explanation below."
+    """
+    <div class="edv-section-intro">
+    Each cluster groups regions with a <b>similar risk profile shape</b> —
+    not just a similar overall score. The chart for each cluster shows its
+    mean pillar scores against the EU27 average, which is the basis for the
+    "why" explanation below. Use the tabs to explore each of the 5 clusters,
+    see representative regions, and read a suggested policy angle.
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
 
 tabs = st.tabs(CLUSTER_ORDER)
@@ -302,7 +314,7 @@ tabs = st.tabs(CLUSTER_ORDER)
 for tab, cluster_choice in zip(tabs, CLUSTER_ORDER):
     with tab:
         case = CASE_STUDIES[cluster_choice]
-        color = CLUSTER_COLORS[cluster_choice]
+        color = CLUSTER_COLORS_BRAND[cluster_choice]
 
         st.markdown(f"### {cluster_choice}")
         st.markdown(f"*{case['headline']}*")
@@ -328,7 +340,7 @@ for tab, cluster_choice in zip(tabs, CLUSTER_ORDER):
                     x=[PILLAR_SHORT[f] for f in FEATURES],
                     y=[EU27_AVERAGE[f] for f in FEATURES],
                     name="EU27 average",
-                    marker_color="lightgrey",
+                    marker_color="#D9DEE3",
                 )
             )
             fig.add_trace(
@@ -341,10 +353,14 @@ for tab, cluster_choice in zip(tabs, CLUSTER_ORDER):
             )
             fig.update_layout(
                 barmode="group",
-                yaxis=dict(title="Risk score (0-1)", range=[0, 1]),
+                yaxis=dict(title="Risk score (0-1)", range=[0, 1], gridcolor="#EDF1F5"),
+                xaxis=dict(gridcolor="#EDF1F5"),
                 height=380,
                 legend=dict(orientation="h", y=-0.2),
                 margin=dict(t=10),
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                font=dict(family="DM Sans, sans-serif", color=INK_MID),
             )
             st.plotly_chart(fig, use_container_width=True, key=f"bar_{cluster_choice}")
 
@@ -367,6 +383,15 @@ for tab, cluster_choice in zip(tabs, CLUSTER_ORDER):
         st.markdown(case["what_it_means"])
 
         st.markdown("#### Where this cluster is")
+        st.markdown(
+            """
+            <div class="edv-section-intro" style="margin-bottom:0.5rem;">
+            Highlighted regions belong to this cluster; all other regions are
+            shown in grey for context.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         if geojson is not None:
             fig_cluster_map = build_cluster_map(df, geojson, highlight_cluster=cluster_choice)
             st.plotly_chart(fig_cluster_map, use_container_width=True, key=f"map_{cluster_choice}")
@@ -401,10 +426,20 @@ for tab, cluster_choice in zip(tabs, CLUSTER_ORDER):
             )
             st.dataframe(member_df, use_container_width=True, hide_index=True)
 
-# -----------------------------
-# Additional charts (collapsed)
-# -----------------------------
-with st.expander("More data — all regions scatter & cluster fingerprints"):
+# Cross-cluster comparison
+st.markdown("## Cross-cluster comparison")
+st.markdown(
+    """
+    <div class="edv-section-intro">
+    These two charts put all clusters side by side: a scatter plot ranking
+    all 87 regions by their index score, and a heatmap showing each
+    cluster's average score on every pillar.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+with st.expander("All regions scatter & cluster fingerprints", expanded=True):
     st.markdown("#### All 87 regions, by cluster")
     fig_scatter = px.scatter(
         df,
@@ -412,7 +447,7 @@ with st.expander("More data — all regions scatter & cluster fingerprints"):
         y="ai_literacy_gap_index",
         color="cluster_label",
         category_orders={"cluster_label": CLUSTER_ORDER},
-        color_discrete_map=CLUSTER_COLORS,
+        color_discrete_map=CLUSTER_COLORS_BRAND,
         hover_data={"geo": True, "country": True, "nuts1_name": True, "rank": False},
         labels={
             "rank": "Rank (1 = highest risk)",
@@ -421,8 +456,15 @@ with st.expander("More data — all regions scatter & cluster fingerprints"):
         },
         height=480,
     )
-    fig_scatter.update_traces(marker=dict(size=8, opacity=0.8))
-    fig_scatter.update_layout(legend=dict(orientation="h", y=-0.2))
+    fig_scatter.update_traces(marker=dict(size=8, opacity=0.85, line=dict(width=0.5, color=WHITE)))
+    fig_scatter.update_layout(
+        legend=dict(orientation="h", y=-0.2),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(family="DM Sans, sans-serif", color=INK_MID),
+        xaxis=dict(gridcolor="#EDF1F5"),
+        yaxis=dict(gridcolor="#EDF1F5"),
+    )
     st.plotly_chart(fig_scatter, use_container_width=True)
 
     st.markdown("#### Cluster fingerprints — mean pillar scores")
@@ -439,7 +481,7 @@ with st.expander("More data — all regions scatter & cluster fingerprints"):
             z=profile.values,
             x=profile.columns,
             y=profile.index,
-            colorscale="YlOrRd",
+            colorscale=[[0, BLUE_LIGHT], [0.5, BLUE], [1, "#C0392B"]],
             zmin=0,
             zmax=1,
             text=profile.round(2).values,
@@ -447,11 +489,176 @@ with st.expander("More data — all regions scatter & cluster fingerprints"):
             colorbar=dict(title="Risk"),
         )
     )
-    fig_heatmap.update_layout(height=350, yaxis=dict(autorange="reversed"))
+    fig_heatmap.update_layout(
+        height=350,
+        yaxis=dict(autorange="reversed"),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(family="DM Sans, sans-serif", color=INK_MID),
+    )
     st.plotly_chart(fig_heatmap, use_container_width=True)
+
+
+# ════════════════════════════════════════════════════════════════
+# SECTION: ABOUT
+# ════════════════════════════════════════════════════════════════
+st.markdown("---")
+st.markdown('<div id="about"></div>', unsafe_allow_html=True)
+
+st.title("About edvancing")
+st.markdown(
+    """
+    <div class="edv-section-intro">
+    edvancing is a project by students of <b>Tomorrow University of Applied
+    Sciences</b>, created by <b>Asel Mamatbekova, Eric Götz, Joshua Kehrer
+    and Lukas Müller</b>. The project maps structural gaps in digital and AI
+    literacy across the EU27, with the goal of raising awareness about
+    unequal access to digital education — and showing where the need for
+    AI literacy support is greatest.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+# SDG alignment
+st.markdown("## SDG alignment")
+st.markdown(
+    """
+    <div class="edv-section-intro">
+    edvancing directly addresses three UN Sustainable Development Goals,
+    focusing on educational equity, regional inequality, and the
+    institutional capacity needed to act on both.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+sdg1, sdg2, sdg3 = st.columns(3)
+
+with sdg1:
+    st.markdown(
+        f"""
+        <div class="edv-team-card" style="text-align:left;">
+        <span class="edv-sdg-badge">SDG 4</span><br>
+        <b>Quality Education</b><br><br>
+        edvancing measures gaps in digital skills and lifelong learning
+        across European regions — the core barriers to equal access to
+        AI-related education.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+with sdg2:
+    st.markdown(
+        f"""
+        <div class="edv-team-card" style="text-align:left;">
+        <span class="edv-sdg-badge">SDG 10</span><br>
+        <b>Reduced Inequalities</b><br><br>
+        By comparing 87 NUTS-1 regions, edvancing makes regional disparities
+        in digital readiness visible — a prerequisite for targeted,
+        place-based policy.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+with sdg3:
+    st.markdown(
+        f"""
+        <div class="edv-team-card" style="text-align:left;">
+        <span class="edv-sdg-badge">SDG 16</span><br>
+        <b>Strong Institutions</b><br><br>
+        The dashboard is designed as a transparent, evidence-based tool for
+        policymakers and public institutions to act on AI literacy gaps.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+# Methodology
+st.markdown("## Methodology")
+st.markdown(
+    """
+    <div class="edv-section-intro">
+    The AI Literacy Gap Index is a proxy-based risk index, not a direct
+    measurement of AI literacy. It is built from six pillars sourced from
+    Eurostat, combined into a single composite score per NUTS-1 region.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+method_steps = [
+    ("1", "Variable selection", "Six pillars were selected from Eurostat regional datasets: digital skills, "
+                                  "at-risk-of-poverty rate, education level, lifelong learning participation, "
+                                  "unemployment among the low-educated, and population demographics."),
+    ("2", "Normalisation", "All variables are normalised to a 0–1 risk scale. Variables where a higher "
+                            "value indicates lower risk are inverted, so that 1 always represents the "
+                            "highest structural risk."),
+    ("3", "Composite scoring", "The six normalised scores are combined into the AI Literacy Gap Index. "
+                                "The methodology and weighting are documented transparently and can be "
+                                "adjusted."),
+    ("4", "Clustering", "Regions are grouped into five clusters using unsupervised clustering on the "
+                         "six underlying pillars — grouping regions by risk profile shape, not just "
+                         "overall score."),
+]
+
+for num, title, text in method_steps:
+    c_num, c_text = st.columns([0.06, 0.94])
+    with c_num:
+        st.markdown(
+            f"""
+            <div style="width:32px;height:32px;border-radius:8px;background-color:{BLUE_LIGHT};
+                        color:{BLUE_DARK};display:flex;align-items:center;justify-content:center;
+                        font-weight:600;font-size:14px;">{num}</div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with c_text:
+        st.markdown(f"**{title}**")
+        st.markdown(f'<div class="edv-section-intro" style="margin-top:-4px;">{text}</div>', unsafe_allow_html=True)
+
+st.markdown(
+    """
+    <div class="edv-info-card">
+    <b>Note:</b> This index is a <b>proxy-based risk measure</b>, not a direct
+    measurement of AI literacy. It reflects structural conditions that
+    correlate with AI literacy outcomes.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+# Data sources
+st.markdown("## Data sources")
+st.markdown(
+    """
+    <div class="edv-section-intro">
+    All data is sourced from Eurostat regional statistics (NUTS-1 level, EU27, 2025):
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+sources = [
+    ("isoc_r_dskl_i", "Individuals' level of digital skills"),
+    ("tgs00107", "People at risk of poverty or social exclusion"),
+    ("edat_lfse_04", "Population by educational attainment level"),
+    ("trng_lfse_04", "Participation in education and training (lifelong learning)"),
+    ("lfst_r_lfu3rt", "Unemployment rate by educational attainment"),
+    ("demo_r_pjanaggr3", "Population by broad age group"),
+]
+
+for code, desc in sources:
+    st.markdown(
+        f'<div class="region-card"><b>{code}</b><br>{desc}</div>',
+        unsafe_allow_html=True,
+    )
 
 st.markdown("---")
 st.caption(
+    "edvancing · Tomorrow University of Applied Sciences · 2025. "
     "Data: Eurostat (isoc_r_dskl_i, tgs00107, edat_lfse_04, trng_lfse_04, "
     "lfst_r_lfu3rt, demo_r_pjanaggr3), 2025."
 )
