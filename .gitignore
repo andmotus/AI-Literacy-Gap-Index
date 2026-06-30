@@ -12,3 +12,7 @@ ANALYSIS.md
 
 #reports
 /reports
+
+# python cache
+__pycache__/
+*.pyc**/.DS_Store
