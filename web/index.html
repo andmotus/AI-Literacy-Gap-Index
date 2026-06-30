@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>AI Literacy Gap Index</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <main class="page">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">NUTS-1 Regional Explorer</p>
+        <h1>AI Literacy Gap Index</h1>
+        <p class="subtitle">
+          A proxy-based regional index showing structural AI-literacy-gap risk across EU27 NUTS-1 regions.
+        </p>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <div class="map-card">
+        <div id="map"></div>
+      </div>
+
+      <aside class="info-card">
+        <h2>Region details</h2>
+        <div id="region-info">
+          <p class="muted">
+            Click on a NUTS-1 region to inspect its index score, rank, cluster profile, and pillar values.
+          </p>
+        </div>
+
+        <hr />
+
+        <h3>How to read the map</h3>
+        <p>
+          Darker regions indicate higher structural AI-literacy-gap risk.
+          Grey regions are official NUTS-1 regions without sufficient index data.
+        </p>
+
+        <p class="method-note">
+          The index does not directly measure individual AI literacy. It combines regional proxy indicators related to digital skills, social vulnerability, education, lifelong learning, labour-market exclusion, and ageing.
+        </p>
+      </aside>
+    </section>
+  </main>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+  </script>
+
+  <script src="map.js"></script>
+</body>
+</html>

@@ -9,3 +9,10 @@
 CLAUDE.md
 ANALYSIS.md
 /.claude/
+
+#reports
+/reports
+
+# python cache
+__pycache__/
+*.pyc**/.DS_Store
