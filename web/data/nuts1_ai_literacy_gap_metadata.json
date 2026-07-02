@@ -1,7 +1,7 @@
 {
   "selected_geometry_version": "simplified_001",
-  "final_geojson_file": "web\\data\\nuts1_ai_literacy_gap.geojson",
-  "file_size_mb": 2.48,
+  "final_geojson_file": "web/data/nuts1_ai_literacy_gap.geojson",
+  "file_size_mb": 2.479,
   "n_regions_total": 92,
   "n_regions_with_index_data": 87,
   "n_regions_without_index_data": 5,

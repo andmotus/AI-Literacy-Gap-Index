@@ -5,6 +5,7 @@ reachable via in-page anchor links in the navbar (#map, #insights, #about).
 """
 
 import json
+from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
@@ -42,6 +43,8 @@ st.set_page_config(
 inject_edvancing_style()
 render_navbar()
 
+DATA_DIR = Path(__file__).parent / "data"
+
 # Explicit brand color mapping per cluster name, as specified.
 CLUSTER_COLORS_BRAND = {
     "Education & Poverty Trap": "#D45C00",        # orange
@@ -56,8 +59,9 @@ CLUSTER_COLORS_BRAND = {
 # Map helpers
 # -----------------------------
 @st.cache_data
-def load_geojson(path: str = "data/nuts1_ai_literacy_gap.geojson"):
-    with open(path, "r", encoding="utf-8") as f:
+def load_geojson(path: str | None = None):
+    p = Path(path) if path else DATA_DIR / "nuts1_ai_literacy_gap.geojson"
+    with open(p, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -157,14 +161,14 @@ def build_cluster_map(df, geojson, highlight_cluster: str | None = None):
 # -----------------------------
 @st.cache_data
 def load_data():
-    df = pd.read_csv("data/ai_literacy_gap_index_clustered.csv")
+    df = pd.read_csv(DATA_DIR / "ai_literacy_gap_index_clustered.csv")
     return df
 
 
 df = load_data()
 
 try:
-    geojson = load_geojson("data/nuts1_ai_literacy_gap.geojson")
+    geojson = load_geojson()
 except FileNotFoundError:
     geojson = None
 
