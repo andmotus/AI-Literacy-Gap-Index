@@ -47,11 +47,11 @@ DATA_DIR = Path(__file__).parent / "data"
 
 # Explicit brand color mapping per cluster name, as specified.
 CLUSTER_COLORS_BRAND = {
-    "Education & Poverty Trap": "#D45C00",        # orange
-    "Digital & Retraining Deficit": "#E8A020",    # yellow
-    "Ageing Workforce & Training Gap": "#6DB33F", # light green
-    "Selective Labour Exclusion": "#00A878",      # dark green
-    "Low Structural Risk": "#0085CA",             # blue (brand / best status)
+    "High Poverty & Low Education": "#D45C00",        
+    "Low Digital Skills": "#E8A020",                 
+    "Ageing Workforce": "#6DB33F", 
+    "Low-Skill Unemployment": "#00A878",      
+    "Broadly Resilient": "#0085CA"             
 }
 
 
@@ -217,10 +217,8 @@ st.markdown("## Map of Europe — by cluster")
 st.markdown(
     """
     <div class="edv-section-intro">
-    This map shows all 87 NUTS-1 regions colored by their assigned cluster.
-    edvancing's brand blue marks the strongest-performing cluster; colors
-    shift toward orange for clusters with higher structural risk. Click any
-    region to see its score, cluster, and pillar breakdown.
+    Each color represents a different structural risk type — not a ranking.
+    Click any region to see its score, cluster, and pillar breakdown.
     </div>
     """,
     unsafe_allow_html=True,
@@ -236,15 +234,17 @@ if geojson is not None:
         key="overview_map",
     )
 
-    legend_cols = st.columns(len(CLUSTER_ORDER))
-    for col, cname in zip(legend_cols, CLUSTER_ORDER):
-        col.markdown(
-            f'<div class="edv-legend-chip">'
+    legend_html = '<div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:8px;">'
+    for cname in CLUSTER_ORDER:
+        color = CLUSTER_COLORS_BRAND[cname]
+        legend_html += (
+            f'<span style="display:flex;align-items:center;gap:6px;white-space:nowrap;">'
             f'<span style="display:inline-block;width:12px;height:12px;'
-            f'background-color:{CLUSTER_COLORS_BRAND[cname]};border-radius:3px;"></span>'
-            f'{cname}</div>',
-            unsafe_allow_html=True,
+            f'background-color:{color};border-radius:3px;flex-shrink:0;"></span>'
+            f'{cname}</span>'
         )
+    legend_html += '</div>'
+    st.markdown(legend_html, unsafe_allow_html=True)
 
     selected_points = map_event.selection.get("points", []) if map_event else []
     if selected_points:
@@ -284,7 +284,7 @@ if geojson is not None:
                 f"suggestions — scroll down to **Insights**."
             )
     else:
-        st.caption("Click any region on the map to see its index score, cluster, and pillar breakdown.")
+        st.caption("Click any region on the map to see its index score and cluster type.")
 
 else:
     st.info(
@@ -327,9 +327,9 @@ for tab, cluster_choice in zip(tabs, CLUSTER_ORDER):
         m1.metric("Regions in cluster", case["n_regions"])
         m2.metric("Mean index score", f"{case['mean_index']:.3f}")
         m3.metric(
-            "Rank among 5 clusters",
-            f"{CLUSTER_ORDER.index(cluster_choice) + 1} of 5",
-            help="1 = highest mean risk, 5 = lowest",
+            "Cluster type",
+            "Risk profile",
+            help="Clusters represent types of structural risk, not a ranking — colors and order do not imply one cluster is worse than another",
         )
 
         col_chart, col_drivers = st.columns([2, 1])

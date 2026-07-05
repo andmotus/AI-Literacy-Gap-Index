@@ -26,7 +26,7 @@ The index is deliberately not a direct measurement of AI literacy (no such regio
 
 **Headline findings:**
 
-- **Risk is geographically concentrated and structurally patterned.** The highest-risk regions are the islands and the south of Italy (ITG *Isole* = 0.731, ITF *Sud* = 0.700), north-eastern Bulgaria (BG3), Romania (RO2) and the French overseas regions (FRY). The lowest-risk regions are the Netherlands, Denmark and Ireland (NL3 *West-Nederland* = 0.219).
+- **Risk is geographically concentrated and structurally patterned.** The highest-risk regions are the islands and the south of Italy (ITG *Isole* = 0.728, ITF *Sud* = 0.698), north-eastern Bulgaria (BG3), Romania (RO2) and the French overseas regions (FRY). The lowest-risk regions are the Netherlands, Denmark and Ireland (NL3 *West-Nederland* = 0.216).
 The index spans a range of **0.51 on a 0–1 scale.** This wide spread, confirms that the AI literacy gap is a genuine cohesion problem, not statistical noise.
 - **There is no single “risk axis”.** Principal Component Analysis shows the first component explains only **34.5 %** of total variance, what proofs that the six pillars measure *different risk-*dimensions. **A region can be at high risk for several structurally distinct reasons.**
 - **Five risk types exist, not one.** Unsupervised clustering (K-Means, k = 5) reveals five qualitatively different “risk fingerprints”, from a deep *High Poverty & Low Education* to a counter-intuitive *Low-Skill Unemployment* profile. **Each type requires a different policy response** — a one-size-fits-all AI-skills programme would fail most of Europe.
@@ -117,7 +117,7 @@ This two-part design is what allows the project to move from *measurement* to *a
 
 ### 2.3 Relevance of the question to the SDGs
 
-The research question operationalises the SDG ambition into something *measurable and locatable*. SDG 10 is a global aspiration; “*West-Nederland scores 0.219 while Isole scores 0.731, and they belong to different risk types*” is an actionable fact a regional authority can use. The index is the bridge between the goal and the intervention.
+The research question operationalises the SDG ambition into something *measurable and locatable*. SDG 10 is a global aspiration; “*West-Nederland scores 0.216 while Isole scores 0.728, and they belong to different risk types*” is an actionable fact a regional authority can use. The index is the bridge between the goal and the intervention.
 
 ---
 
@@ -335,7 +335,7 @@ i.e. each pillar’s loading summed across *all* principal components, weighted
 - 34.5 % means **every pillar contributes unique information**; risk is genuinely multidimensional (confirming **H2**).
 - Consequently the **All-PC weights converge almost exactly to equal weights** (every pillar lands between 14.8 % and 18.4 %). This convergence is a *substantive* finding: the data *empirically validates* the equal-weights baseline rather than us *assuming* it. The final index is therefore both data-grounded **and** robust to the weighting choice — the strongest possible position for a composite index.
 
-**Final index range:** **0.219 (NL3 West-Nederland) to 0.731 (ITG Isole)** — a span of
+**Final index range:** **0.216 (NL3 West-Nederland) to 0.728 (ITG Isole)** — a span of
 0.51 on the 0–1 scale, i.e. the most at-risk region carries more than three times the
 gap-risk of the least. The full ranked table is in `ai_literacy_gap_index.csv`.
 
@@ -343,19 +343,19 @@ gap-risk of the least. The full ranked table is in `ai_literacy_gap_index.csv`.
 
 | Rank | Region | Country | Index | Cluster |
 | --- | --- | --- | --- | --- |
-| 1 | ITG — Isole | Italy | 0.731 | High Poverty & 
+| 1 | ITG — Isole | Italy | 0.728 | High Poverty & 
 Low Education |
-| 2 | ITF — Sud | Italy | 0.700 | High Poverty & 
+| 2 | ITF — Sud | Italy | 0.698 | High Poverty & 
 Low Education |
-| 3 | BG3 — Severna i Yugoiztochna | Bulgaria | 0.651 | Low Digital Skills |
+| 3 | BG3 — Severna i Yugoiztochna | Bulgaria | 0.649 | Low Digital Skills |
 | 4 | RO2 — Macroregiunea Doi | Romania | 0.648 | High Poverty & 
 Low Education |
-| 5 | FRY — Régions Ultrapériphériques | France | 0.643 | High Poverty & 
+| 5 | FRY — Régions Ultrapériphériques | France | 0.685 | High Poverty & 
 Low Education |
 | … |  |  |  |  |
-| 85 | DK0 — Danmark | Denmark | 0.245 | Broadly Resilient |
-| 86 | NL2 — Oost-Nederland | Netherlands | 0.229 | Broadly Resilient |
-| 87 | NL3 — West-Nederland | Netherlands | 0.219 | Broadly Resilient |
+| 85 | DK0 — Danmark | Denmark | 0.243 | Broadly Resilient |
+| 86 | NL2 — Oost-Nederland | Netherlands | 0.225 | Broadly Resilient |
+| 87 | NL3 — West-Nederland | Netherlands | 0.216 | Broadly Resilient |
 
 **The geographic pattern is itself an external validation of the index (H1).** The index is built entirely from AI-literacy proxies — digital skills, education, poverty, lifelong learning, unemployment and demographics — **with no input from regional GDP or cohesion-policy classifications.** Yet its resulting map reproduces the EU's long-established regional-disparity geography almost exactly. 
 
@@ -390,11 +390,11 @@ The number of clusters was selected with the **elbow (inertia)** and **silhouett
 
 | Cluster | n | Avg. index | Defining fingerprint |
 | --- | --- | --- | --- |
-| **High Poverty & Low Education** | 11 | **0.583** | High P2 (0.68) + high P3 (0.65), with elevated P4. Poverty and low education reinforce each other. |
-| **Low Digital Skills** | 20 | 0.520 | High P1 gap (0.69) + very high P4 (0.88) + ageing (P6 0.63). Specifically a digital-competence and skills-updating failure. |
-| **Ageing Workforce** | 39 | 0.410 | Elevated P4 (0.74) + P6 (0.64); poverty/education *not* elevated. The large, diffuse “gradual risk” middle of Europe. |
-| **Low-Skill Unemployment** | 6 | 0.354 | Highest P5 (0.67) but lowest P3 (0.12) and low P2 — strong societies with one concentrated blind spot. |
-| **Broadly Resilient** | 11 | **0.291** | Acute pillars low; lifelong learning and ageing only moderate. Same long-term challenge, far stronger starting position. |
+| **High Poverty & Low Education** | 9 | **0.597** | High P2 (0.67) + high P3 (0.73), with elevated P4. Poverty and low education reinforce each other. |
+| **Low Digital Skills** | 21 | 0.524 | High P1 gap (0.70) + very high P4 (0.87) + ageing (P6 0.62). Specifically a digital-competence and skills-updating failure. |
+| **Ageing Workforce** | 22 | 0.442 | Elevated P4 (0.76) + P6 (0.75); poverty/education *not* elevated. The large, diffuse "gradual risk" middle of Europe. |
+| **Low-Skill Unemployment** | 7 | 0.363 | Highest P5 (0.66) but lowest P3 (0.15) and low P2 (0.32) — strong societies with one concentrated blind spot. |
+| **Broadly Resilient** | 28 | **0.335** | Acute pillars low; lifelong learning and ageing only moderate. Same long-term challenge, far stronger starting position. |
 1. **High Poverty & Low Education**
 Poverty and low educational attainment reinforce each other here. Many adults never went beyond basic schooling and face financial hardship, so the AI literacy gap is broad and deeply rooted — it can't be closed with digital courses alone.
 2. **Low Digital Skills**
@@ -420,14 +420,14 @@ What the index adds to that familiar geography is the **digital dimension**. Alo
 
 ### 7.2 The most important nuance: risk type, not just risk rank
 
-The clustering reveals that **the same risk score can mean opposite things**, and the clearest example is the **Low-Skill Unemployment**  cluster (6 regions). These regions look *strong* on almost every dimension — low poverty (P2 0.25), the lowest low-education share of any cluster (P3 0.12), decent digital skills, active retraining. Yet unemployment among their few low educated residents is the **highest of all clusters** (P5 0.67). This is a well-functioning society with a **single concentrated blind spot**: the small minority without qualifications falls through every net at once.
+The clustering reveals that **the same risk score can mean opposite things**, and the clearest example is the **Low-Skill Unemployment** cluster (7 regions). These regions look *strong* on almost every dimension — low poverty (P2 0.32), the lowest low-education share of any cluster (P3 0.15), decent digital skills, active retraining. Yet unemployment among their few low educated residents is the **highest of all clusters** (P5 0.66). This is a well-functioning society with a **single concentrated blind spot**: the small minority without qualifications falls through every net at once.
 
-The policy implication is the opposite of the high-risk clusters. These regions do **not** need infrastructure-building or broad skills campaigns — they need **targeted outreach to a small, hard-to-reach group**. A national “boost digital skills” programme would largely miss them. This is the project’s strongest argument for *why a typology, not just a ranking, is necessary*: a ranking would file these regions as “moderate risk” and prescribe the wrong medicine.
+The policy implication is the opposite of the high-risk clusters. These regions do **not** need infrastructure-building or broad skills campaigns — they need **targeted outreach to a small, hard-to-reach group**. A national “boost digital skills” programme would largely miss them. This is the project’s strongest argument for *why a typology, not just a ranking, is necessary*: a ranking would file these regions as "moderate risk" and prescribe the wrong medicine.
 
 ### 7.3 Linking the three SDGs to the findings
 
 - **SDG 10** — the finished index is a ready-made targeting instrument: it ranks all 87 regions and, validated against the EU cohesion map (§6.2), can prioritise Cohesion-Policy funding directly.
-- **SDG 4** — the results pinpoint the lever: digital skills (P1) is the most influential pillar, and the 20-region Low Digital Skills cluster maps exactly where adult-learning systems (Target 4.4) are failing to keep pace.
+- **SDG 4** — the results pinpoint the lever: digital skills (P1) is the most influential pillar, and the 21-region Low Digital Skills cluster maps exactly where adult-learning systems (Target 4.4) are failing to keep pace.
 - **SDG 16** — the regions the index flags as highest-risk are the same ones least equipped to resist AI-enabled disinformation; the index therefore doubles as a democratic-resilience map, showing where AI-literacy investment is also institutional-integrity investment.
 
 ---
@@ -440,11 +440,11 @@ Recommendations are **differentiated by cluster**, because the central finding i
 
 | Cluster (n) | Core problem | Recommended intervention | SDG |
 | --- | --- | --- | --- |
-| **High Poverty & Low Education** (11) | Self-reinforcing poverty + low education | **Structural, long-horizon**: combine income support with foundational adult education *before* digital upskilling can land. Tie ESF+/cohesion funds to integrated education-poverty programmes. | 10 + 4 |
-| **Low Digital Skills** (20) | Digital-competence gap + failing retraining systems | **Adult digital-skills programmes at scale**, targeted at mid-career workers; rebuild lifelong-learning infrastructure. Highest direct SDG-4.4 leverage. | 4 |
-| **Ageing Workforce** (39) | Diffuse, gradual — ageing workers under-participating in training | **Preventive, broad**: workplace-based and age-inclusive digital training; embed AI literacy in continuing professional development before the gap becomes acute. | 4 |
-| **Low-Skill Unemployment**  (6) | Small excluded low-qualified minority | **Targeted outreach, not broad campaigns**: active labour-market measures and individualised re-engagement for a specific hard-to-reach group. | 10 |
-| **Broadly Resilient** (11) | Strong, but not immune | **Maintain and lead**: pilot advanced AI-literacy curricula; act as exporters of best practice to higher-risk regions. | 4 + 16 |
+| **High Poverty & Low Education** (9) | Self-reinforcing poverty + low education | **Structural, long-horizon**: combine income support with foundational adult education *before* digital upskilling can land. Tie ESF+/cohesion funds to integrated education-poverty programmes. | 10 + 4 |
+| **Low Digital Skills** (21) | Digital-competence gap + failing retraining systems | **Adult digital-skills programmes at scale**, targeted at mid-career workers; rebuild lifelong-learning infrastructure. Highest direct SDG-4.4 leverage. | 4 |
+| **Ageing Workforce** (22) | Diffuse, gradual — ageing workers under-participating in training | **Preventive, broad**: workplace-based and age-inclusive digital training; embed AI literacy in continuing professional development before the gap becomes acute. | 4 |
+| **Low-Skill Unemployment** (7) | Small excluded low-qualified minority | **Targeted outreach, not broad campaigns**: active labour-market measures and individualised re-engagement for a specific hard-to-reach group. | 10 |
+| **Broadly Resilient** (28) | Strong, but not immune | **Maintain and lead**: pilot advanced AI-literacy curricula; act as exporters of best practice to higher-risk regions. | 4 + 16 |
 
 ---
 
