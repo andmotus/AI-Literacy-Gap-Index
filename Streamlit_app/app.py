@@ -323,14 +323,9 @@ for tab, cluster_choice in zip(tabs, CLUSTER_ORDER):
         st.markdown(f"### {cluster_choice}")
         st.markdown(f"*{case['headline']}*")
 
-        m1, m2, m3 = st.columns(3)
+        m1, m2 = st.columns(2)
         m1.metric("Regions in cluster", case["n_regions"])
         m2.metric("Mean index score", f"{case['mean_index']:.3f}")
-        m3.metric(
-            "Cluster type",
-            "Risk profile",
-            help="Clusters represent types of structural risk, not a ranking — colors and order do not imply one cluster is worse than another",
-        )
 
         col_chart, col_drivers = st.columns([2, 1])
 
